@@ -27,7 +27,7 @@ To get started with MySQL Playground, follow these steps:
 3. Set up your database configuration in the .env file.
 4. Run the Laravel development server:
     ```bash
-        php artisan serve
+    php artisan serve
     ```
 ## Usage
 
