@@ -1,7 +1,7 @@
 <div class="mt-4 pr-4 pl-4">
     <div class="row">
 
-        <div class="col-md-8">
+        <div class="col-md-7">
             @if($query)
                 <div class="row mb-1">
                     <div class="col-md-12">
@@ -10,6 +10,12 @@
                 </div>
             @endif
             @if($queryResult)
+                <div class="row mt-1">
+                    <div class="col-md-12">
+                        <p>Query Execution Time: {{ $queryTime }} seconds</p>
+                        <p>Result Size: {{ $querySize }} KB</p>
+                    </div>
+                </div>
                 @if(is_array($queryResult))
                     <div class="row mt-1">
                         <div class="col-md-12">
@@ -42,7 +48,7 @@
                 @endif
             @endif
         </div>
-        <div class="col-md-4">
+        <div class="col-md-5">
             <b>| Columns</b>
             <div class="row">
                 <div class="col-md-12">
@@ -65,6 +71,23 @@
                     </div>
                 </div>
             </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="input-group mb-3">
+                        <input type="text" class="form-control" placeholder="Order by columns (comma-separated)"
+                               wire:model="orderByColumns">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="input-group mb-3">
+                        <select class="form-control" wire:model="orderByDirection">
+                            <option value="ASC">Ascending</option>
+                            <option value="DESC">Descending</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
             <b>| JOINs</b><br>
             <div class="row">
                 <div class="col-md-4">

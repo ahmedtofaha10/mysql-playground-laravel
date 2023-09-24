@@ -2,8 +2,8 @@
 
 namespace App\Livewire;
 
-use App\Models\GameSession;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Session;
 use Livewire\Component;
 
 class Playground extends Component
@@ -12,7 +12,8 @@ class Playground extends Component
     public $queryResult; // Store the result of the query
     public $selectedTable;
     public $selectedColumns;
-    public $generatedQuery;
+    public $queryTime;
+    public $querySize;
     public $tableNames;
     public $joins = [];
 
@@ -24,6 +25,8 @@ class Playground extends Component
     public $whereClauses = [];
     public $whereConditions;
     public $gameName;
+    public $orderByColumns;
+    public $orderByDirection = 'ASC';
 
     public function addWhere()
     {
@@ -80,8 +83,16 @@ class Playground extends Component
     public function executeQuery()
     {
         try {
+            $startTime = microtime(true); // Record the start time
             // Execute the user's SQL query and store the result
-            $this->queryResult = DB::select($this->query);
+            $results = $this->queryResult = DB::select($this->query);
+            $endTime = microtime(true); // Record the end time
+            $executionTime = round($endTime - $startTime, 4); // Calculate execution time in seconds
+            $resultSizeKB = round(strlen(json_encode($results)) / 1024, 2);
+
+            $this->queryTime = $executionTime;
+            $this->querySize = $resultSizeKB;
+
         } catch (\Exception $e) {
             // Handle any exceptions or errors here
             $this->queryResult = 'Error: ' . $e->getMessage();
@@ -102,6 +113,9 @@ class Playground extends Component
                     $whereConditions[] = $whereClause['condition'];
                 }
                 $this->query .= " WHERE " . implode(" AND ", $whereConditions);
+            }
+            if ($this->orderByColumns) {
+                $this->query .= " ORDER BY {$this->orderByColumns} {$this->orderByDirection}";
             }
             $this->executeQuery();
         } else {
@@ -126,17 +140,15 @@ class Playground extends Component
     public function saveSession()
     {
         if (! empty($this->gameName)){
-            // Save the session data to the database
-            GameSession::query()->updateOrCreate([
-                'game_name' => $this->gameName,
-            ], [
-                'session_data' => json_encode([
-                    'selectedTable' => $this->selectedTable,
-                    'selectedColumns' => $this->selectedColumns,
-                    'joins' => $this->joins,
-                    'whereClauses' => $this->whereClauses,
-                    'whereConditions' => $this->whereConditions,
-                ]),
+            // Save the session data
+            Session::put("game.sessions.{$this->gameName}", [
+                'selectedTable' => $this->selectedTable,
+                'selectedColumns' => $this->selectedColumns,
+                'joins' => $this->joins,
+                'whereClauses' => $this->whereClauses,
+                'whereConditions' => $this->whereConditions,
+                'orderByColumns' => $this->orderByColumns,
+                'orderByDirection' => $this->orderByDirection,
             ]);
 
             // Display a success message or perform any other action as needed
@@ -148,19 +160,18 @@ class Playground extends Component
 
     public function loadSession()
     {
-        // Load the session data from the database based on the specified game name
-        $session = GameSession::query()->where('game_name', $this->gameName)->first();
+        $sessionData = Session::get("game.sessions.{$this->gameName}");
 
-        if ($session) {
-            $sessionData = json_decode($session->session_data, true);
-
-            // Restore the session data
+        if ($sessionData) {
             $this->selectedTable = $sessionData['selectedTable'];
             $this->selectedColumns = $sessionData['selectedColumns'];
             $this->joins = $sessionData['joins'];
             $this->whereClauses = $sessionData['whereClauses'];
             $this->whereConditions = $sessionData['whereConditions'];
-
+            $this->orderByColumns = $sessionData['orderByColumns'];
+            $this->orderByDirection = $sessionData['orderByDirection'];
+            // GO
+            $this->generateQuery();
             // Display a success message or perform any other action as needed
             session()->flash('success', 'Session data loaded successfully.');
         } else {
