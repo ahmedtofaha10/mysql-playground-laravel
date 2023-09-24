@@ -25,10 +25,6 @@ To get started with MySQL Playground, follow these steps:
    npm install && npm run dev
    ```
 3. Set up your database configuration in the .env file.
-4. Run the Laravel development server:
-    ```bash
-    php artisan serve
-    ```
 ## Usage
 
 1. **Select a Table**: Choose a table from the dropdown menu or specify custom columns by entering them (comma-separated) in the input field.
